@@ -7,12 +7,12 @@
  * and processes jobs from the database queue.
  */
 
+// Load environment variables FIRST before any other imports
+import "dotenv/config";
+
 import { getDb } from "../src/lib/db";
 import { createWorker } from "../src/lib/jobs/worker";
 import { jobHandlers } from "../src/lib/jobs/handlers";
-
-// Load environment variables
-import "dotenv/config";
 
 async function main() {
   console.log("Starting PAYGSite Job Worker...");
