@@ -1,0 +1,349 @@
+// PAYGSite Database Schema
+// Multi-tenant website platform
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// =============================================================================
+// CORE TENANT TABLES
+// =============================================================================
+
+model Tenant {
+  id                   String   @id @default(uuid())
+  businessName         String   @map("business_name")
+  businessSlug         String   @unique @map("business_slug")
+  planPages            Int      @map("plan_pages")
+  status               String   @default("pending_payment") // pending_payment | building | active | generation_failed | payment_failed | cancelled | archived
+  stripeCustomerId     String?  @unique @map("stripe_customer_id")
+  stripeSubscriptionId String?  @unique @map("stripe_subscription_id")
+  createdAt            DateTime @default(now()) @map("created_at")
+  updatedAt            DateTime @updatedAt @map("updated_at")
+
+  // Relations
+  domains            TenantDomain[]
+  siteSettings       TenantSiteSettings?
+  pages              Page[]
+  navigations        Navigation[]
+  subscription       Subscription?
+  minutesLedger      MinutesLedger[]
+  tickets            ChangeTicket[]
+  onboarding         OnboardingSubmission?
+  buildSpecs         AiBuildSpec[]
+  aiGenerations      AiGeneration[]
+  users              TenantUser[]
+  jobs               Job[]
+  contactSubmissions ContactSubmission[]
+  emailLogs          EmailLog[]
+
+  @@map("tenants")
+}
+
+model TenantDomain {
+  id                 String    @id @default(uuid())
+  tenantId           String    @map("tenant_id")
+  domain             String    @unique
+  domainType         String    @map("domain_type") // subdomain | custom
+  isPrimary          Boolean   @default(false) @map("is_primary")
+  verificationStatus String    @default("pending") @map("verification_status") // pending | verified | failed
+  expectedDnsRecord  Json?     @map("expected_dns_record")
+  verifiedAt         DateTime? @map("verified_at")
+  createdAt          DateTime  @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_domains")
+}
+
+model TenantSiteSettings {
+  tenantId           String   @id @map("tenant_id")
+  tagline            String?
+  toneOfVoice        String?  @map("tone_of_voice")
+  logoUrl            String?  @map("logo_url")
+  primaryColourHex   String?  @map("primary_colour_hex")
+  secondaryColourHex String?  @map("secondary_colour_hex")
+  designVibe         String?  @map("design_vibe")
+  phone              String?
+  email              String?
+  address            String?
+  openingHours       String?  @map("opening_hours")
+  ctaPrimary         String?  @map("cta_primary")
+  ctaSecondary       String?  @map("cta_secondary")
+  footerDisclaimer   String?  @map("footer_disclaimer")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("tenant_site_settings")
+}
+
+// =============================================================================
+// PAGES & BLOCKS
+// =============================================================================
+
+model Page {
+  id                String   @id @default(uuid())
+  tenantId          String   @map("tenant_id")
+  title             String
+  slug              String
+  purpose           String?
+  status            String   @default("draft") // draft | published
+  seoTitle          String?  @map("seo_title")
+  seoDescription    String?  @map("seo_description")
+  primaryKeyword    String?  @map("primary_keyword")
+  secondaryKeywords String[] @map("secondary_keywords")
+  ogTitle           String?  @map("og_title")
+  ogDescription     String?  @map("og_description")
+  sortOrder         Int      @default(0) @map("sort_order")
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant      @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  blocks PageBlock[]
+
+  @@unique([tenantId, slug])
+  @@map("pages")
+}
+
+model PageBlock {
+  id        String   @id @default(uuid())
+  pageId    String   @map("page_id")
+  blockType String   @map("block_type") // hero | services_grid | about_split | testimonial_list | accreditations_row | gallery_grid | faq_accordion | service_area | contact_form | cta_banner | rich_text
+  data      Json
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@map("page_blocks")
+}
+
+model Navigation {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  location  String // header | footer
+  items     Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, location])
+  @@map("navigations")
+}
+
+// =============================================================================
+// SUBSCRIPTIONS & MINUTES
+// =============================================================================
+
+model Subscription {
+  id                      String    @id @default(uuid())
+  tenantId                String    @unique @map("tenant_id")
+  status                  String    @default("active") // active | past_due | cancelled
+  currentPeriodStart      DateTime? @map("current_period_start")
+  currentPeriodEnd        DateTime? @map("current_period_end")
+  includedMinutesPerMonth Int       @default(0) @map("included_minutes_per_month")
+  createdAt               DateTime  @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+}
+
+model MinutesLedger {
+  id               String   @id @default(uuid())
+  tenantId         String   @map("tenant_id")
+  periodStart      DateTime @map("period_start") @db.Date
+  periodEnd        DateTime @map("period_end") @db.Date
+  includedMinutes  Int      @map("included_minutes")
+  usedMinutes      Int      @default(0) @map("used_minutes")
+  purchasedMinutes Int      @default(0) @map("purchased_minutes")
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, periodStart])
+  @@map("minutes_ledger")
+}
+
+// =============================================================================
+// TICKETS & TIME TRACKING
+// =============================================================================
+
+model ChangeTicket {
+  id              String   @id @default(uuid())
+  tenantId        String   @map("tenant_id")
+  title           String
+  description     String
+  status          String   @default("new") // new | in_progress | needs_info | done | cancelled
+  priority        String   @default("normal") // low | normal | high
+  category        String   @default("content") // content | seo | design | new_page | other
+  createdByUserId String?  @map("created_by_user_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  tenant   Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  timeLogs TicketTimeLog[]
+
+  @@map("change_tickets")
+}
+
+model TicketTimeLog {
+  id        String   @id @default(uuid())
+  ticketId  String   @map("ticket_id")
+  minutes   Int
+  note      String?
+  loggedBy  String?  @map("logged_by")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  ticket ChangeTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@map("ticket_time_logs")
+}
+
+// =============================================================================
+// ONBOARDING & AI
+// =============================================================================
+
+model OnboardingSubmission {
+  id         String   @id @default(uuid())
+  tenantId   String   @unique @map("tenant_id")
+  rawAnswers Json     @map("raw_answers")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("onboarding_submissions")
+}
+
+model AiBuildSpec {
+  id          String   @id @default(uuid())
+  tenantId    String   @map("tenant_id")
+  specVersion String   @default("1.0") @map("spec_version")
+  spec        Json
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("ai_build_specs")
+}
+
+model AiGeneration {
+  id        String   @id @default(uuid())
+  tenantId  String   @map("tenant_id")
+  kind      String // gpt_spec | claude_seed | claude_code
+  input     Json?
+  output    Json?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("ai_generations")
+}
+
+// =============================================================================
+// USERS & AUTH
+// =============================================================================
+
+model TenantUser {
+  id              String    @id @default(uuid())
+  tenantId        String    @map("tenant_id")
+  email           String
+  name            String?
+  role            String    @default("admin") // admin | editor | viewer
+  emailVerifiedAt DateTime? @map("email_verified_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, email])
+  @@map("tenant_users")
+}
+
+model AdminUser {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("admin_users")
+}
+
+// =============================================================================
+// JOBS & BACKGROUND TASKS
+// =============================================================================
+
+model Job {
+  id          String    @id @default(uuid())
+  tenantId    String?   @map("tenant_id")
+  jobType     String    @map("job_type") // ai_generate_spec | ai_generate_seed | import_seed | dns_check | send_email
+  status      String    @default("pending") // pending | running | completed | failed | dead
+  payload     Json
+  result      Json?
+  attempts    Int       @default(0)
+  maxAttempts Int       @default(3) @map("max_attempts")
+  lastError   String?   @map("last_error")
+  runAt       DateTime  @default(now()) @map("run_at")
+  startedAt   DateTime? @map("started_at")
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([status, runAt])
+  @@map("jobs")
+}
+
+// =============================================================================
+// STRIPE & EMAIL LOGS
+// =============================================================================
+
+model StripeEvent {
+  id            String    @id @default(uuid())
+  stripeEventId String    @unique @map("stripe_event_id")
+  eventType     String    @map("event_type")
+  payload       Json
+  processedAt   DateTime? @map("processed_at")
+  error         String?
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@map("stripe_events")
+}
+
+model EmailLog {
+  id              String   @id @default(uuid())
+  tenantId        String?  @map("tenant_id")
+  recipientEmail  String   @map("recipient_email")
+  template        String
+  subject         String
+  status          String   @default("pending") // pending | sent | failed
+  resendMessageId String?  @map("resend_message_id")
+  error           String?
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@map("email_logs")
+}
+
+// =============================================================================
+// CONTACT FORM
+// =============================================================================
+
+model ContactSubmission {
+  id               String   @id @default(uuid())
+  tenantId         String   @map("tenant_id")
+  formData         Json     @map("form_data")
+  sourcePage       String?  @map("source_page")
+  ipAddress        String?  @map("ip_address")
+  forwardedToEmail String?  @map("forwarded_to_email")
+  status           String   @default("pending") // pending | sent | failed
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@map("contact_submissions")
+}
