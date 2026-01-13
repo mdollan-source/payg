@@ -169,14 +169,21 @@ export default function BrandPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Primary Colour</FormLabel>
-                      <div className="flex gap-2">
-                        <FormControl>
-                          <Input placeholder="#000000" {...field} />
-                        </FormControl>
-                        <div
-                          className="w-10 h-10 rounded border"
-                          style={{ backgroundColor: field.value || "#ffffff" }}
+                      <div className="flex gap-3 items-center">
+                        <input
+                          type="color"
+                          value={field.value || "#3b82f6"}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          className="w-16 h-16 rounded-lg border cursor-pointer"
                         />
+                        <FormControl>
+                          <Input
+                            placeholder="#3b82f6"
+                            value={field.value || ""}
+                            onChange={(e) => field.onChange(e.target.value)}
+                            className="font-mono"
+                          />
+                        </FormControl>
                       </div>
                       <FormMessage />
                     </FormItem>
@@ -188,14 +195,21 @@ export default function BrandPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Secondary Colour</FormLabel>
-                      <div className="flex gap-2">
-                        <FormControl>
-                          <Input placeholder="#000000" {...field} />
-                        </FormControl>
-                        <div
-                          className="w-10 h-10 rounded border"
-                          style={{ backgroundColor: field.value || "#ffffff" }}
+                      <div className="flex gap-3 items-center">
+                        <input
+                          type="color"
+                          value={field.value || "#1e40af"}
+                          onChange={(e) => field.onChange(e.target.value)}
+                          className="w-16 h-16 rounded-lg border cursor-pointer"
                         />
+                        <FormControl>
+                          <Input
+                            placeholder="#1e40af"
+                            value={field.value || ""}
+                            onChange={(e) => field.onChange(e.target.value)}
+                            className="font-mono"
+                          />
+                        </FormControl>
                       </div>
                       <FormMessage />
                     </FormItem>

@@ -141,28 +141,24 @@ export default function DomainPage() {
                       value={field.value ? "yes" : "no"}
                       className="grid grid-cols-2 gap-4"
                     >
-                      <div
+                      <Label
+                        htmlFor="no-domain"
                         className={`flex items-center space-x-3 p-4 border rounded-lg cursor-pointer transition-all ${
                           !field.value ? "border-primary bg-primary/5" : "hover:border-primary/50"
                         }`}
-                        onClick={() => field.onChange(false)}
                       >
                         <RadioGroupItem value="no" id="no-domain" />
-                        <Label htmlFor="no-domain" className="cursor-pointer">
-                          No, I&apos;ll use the free subdomain
-                        </Label>
-                      </div>
-                      <div
+                        <span>No, I&apos;ll use the free subdomain</span>
+                      </Label>
+                      <Label
+                        htmlFor="yes-domain"
                         className={`flex items-center space-x-3 p-4 border rounded-lg cursor-pointer transition-all ${
                           field.value ? "border-primary bg-primary/5" : "hover:border-primary/50"
                         }`}
-                        onClick={() => field.onChange(true)}
                       >
                         <RadioGroupItem value="yes" id="yes-domain" />
-                        <Label htmlFor="yes-domain" className="cursor-pointer">
-                          Yes, I own a domain
-                        </Label>
-                      </div>
+                        <span>Yes, I own a domain</span>
+                      </Label>
                     </RadioGroup>
                   </FormControl>
                   <FormMessage />
