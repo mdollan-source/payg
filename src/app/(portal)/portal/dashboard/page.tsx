@@ -57,17 +57,23 @@ export default async function DashboardPage() {
             {PLAN_NAMES[tenant.planPages as 1 | 5 | 10] || `${tenant.planPages} Page Plan`}
           </p>
         </div>
-        <Button asChild>
-          <a href={siteUrl} target="_blank" rel="noopener noreferrer">
-            <ExternalLink className="w-4 h-4 mr-2" />
-            View Website
-          </a>
-        </Button>
+        {tenant.status === "active" && (
+          <Button asChild>
+            <a href={siteUrl} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="w-4 h-4 mr-2" />
+              View Website
+            </a>
+          </Button>
+        )}
       </div>
 
       {/* Status Banner */}
-      {tenant.status !== "live" && (
-        <Card className={tenant.status === "building" ? "border-blue-200 bg-blue-50" : "border-yellow-200 bg-yellow-50"}>
+      {tenant.status !== "active" && (
+        <Card className={
+          tenant.status === "building" ? "border-blue-200 bg-blue-50" :
+          tenant.status === "pending_review" ? "border-green-200 bg-green-50" :
+          "border-yellow-200 bg-yellow-50"
+        }>
           <CardContent className="flex items-center gap-3 py-4">
             {tenant.status === "building" ? (
               <>
@@ -75,6 +81,14 @@ export default async function DashboardPage() {
                 <div>
                   <p className="font-medium text-blue-900">Your website is being built</p>
                   <p className="text-sm text-blue-700">This usually takes a few minutes. We&apos;ll email you when it&apos;s ready.</p>
+                </div>
+              </>
+            ) : tenant.status === "pending_review" ? (
+              <>
+                <CheckCircle className="w-5 h-5 text-green-600" />
+                <div>
+                  <p className="font-medium text-green-900">Your website is ready for review</p>
+                  <p className="text-sm text-green-700">We&apos;re doing a final check and will make it live shortly. You&apos;ll receive an email when it&apos;s live.</p>
                 </div>
               </>
             ) : tenant.status === "payment_failed" ? (

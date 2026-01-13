@@ -179,27 +179,14 @@ export const handleImportSeed: JobHandler = async (
   const { importSeed } = await import("@/lib/importer/seed-importer");
   await importSeed(db, payload.tenantId, seed);
 
-  // Update tenant status to live
+  // Update tenant status to pending_review (admin must approve before going live)
   await db.tenant.update({
     where: { id: payload.tenantId },
-    data: { status: "live" },
+    data: { status: "pending_review" },
   });
 
-  // Queue email notification
-  await db.job.create({
-    data: {
-      tenantId: payload.tenantId,
-      jobType: "send_email",
-      status: "pending",
-      payload: {
-        tenantId: payload.tenantId,
-        template: "site_ready",
-      },
-    },
-  });
-
-  console.log(`[Import] Seed imported for tenant ${payload.tenantId}, status set to live`);
-  return { status: "seed_imported", tenantStatus: "live" };
+  console.log(`[Import] Seed imported for tenant ${payload.tenantId}, awaiting admin review`);
+  return { status: "seed_imported", tenantStatus: "pending_review" };
 };
 
 /**

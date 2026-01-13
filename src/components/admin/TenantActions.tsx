@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { RefreshCw, Loader2, AlertTriangle, XCircle } from "lucide-react";
+import { RefreshCw, Loader2, AlertTriangle, XCircle, CheckCircle } from "lucide-react";
 
 interface TenantActionsProps {
   tenant: {
@@ -79,6 +79,22 @@ export function TenantActions({ tenant }: TenantActionsProps) {
                 <AlertTriangle className="w-4 h-4 mr-2" />
               )}
               Force Complete
+            </Button>
+          )}
+
+          {tenant.status === "pending_review" && (
+            <Button
+              size="sm"
+              className="bg-green-600 hover:bg-green-700"
+              onClick={() => handleAction("approve")}
+              disabled={loading !== null}
+            >
+              {loading === "approve" ? (
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              ) : (
+                <CheckCircle className="w-4 h-4 mr-2" />
+              )}
+              Approve & Go Live
             </Button>
           )}
 

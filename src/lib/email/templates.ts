@@ -296,6 +296,59 @@ Reply directly to: ${data.email}
 }
 
 /**
+ * Welcome email - sent after successful payment
+ */
+export function welcomeEmail(data: TemplateData): { subject: string; html: string; text: string } {
+  const subject = `Welcome to PAYGSite! - ${data.businessName}`;
+
+  const html = emailWrapper(`
+    <h2 style="margin: 0 0 16px 0; color: #18181b; font-size: 20px;">Welcome to PAYGSite! 🎉</h2>
+    <p style="margin: 0 0 16px 0; color: #3f3f46; line-height: 1.6;">
+      Hi there,
+    </p>
+    <p style="margin: 0 0 16px 0; color: #3f3f46; line-height: 1.6;">
+      Thank you for signing up! Your account for <strong>${data.businessName}</strong> is ready.
+    </p>
+    <p style="margin: 0 0 16px 0; color: #3f3f46; line-height: 1.6;">
+      We're building your website now. You'll receive another email once it's ready for you to review.
+    </p>
+    <p style="margin: 0 0 16px 0; color: #3f3f46; line-height: 1.6;">
+      In the meantime, you can access your dashboard to:
+    </p>
+    <ul style="margin: 0 0 24px 0; color: #3f3f46; line-height: 1.8; padding-left: 20px;">
+      <li>View your account details</li>
+      <li>Submit change requests</li>
+      <li>Manage your billing</li>
+    </ul>
+    <p style="margin: 0 0 24px 0;">
+      <a href="${data.dashboardUrl}" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 500;">
+        Access Your Dashboard
+      </a>
+    </p>
+    <p style="margin: 0; color: #3f3f46; line-height: 1.6;">
+      If you have any questions, just reply to this email.
+    </p>
+  `);
+
+  const text = `
+Welcome to PAYGSite!
+
+Thank you for signing up! Your account for ${data.businessName} is ready.
+
+We're building your website now. You'll receive another email once it's ready for you to review.
+
+In the meantime, you can access your dashboard:
+${data.dashboardUrl}
+
+If you have any questions, just reply to this email.
+
+- The PAYGSite Team
+`;
+
+  return { subject, html, text };
+}
+
+/**
  * Get template by name
  */
 export function getTemplate(
@@ -303,6 +356,8 @@ export function getTemplate(
   data: TemplateData
 ): { subject: string; html: string; text: string } | null {
   switch (templateName) {
+    case "welcome":
+      return welcomeEmail(data);
     case "site_ready":
       return siteReadyEmail(data);
     case "magic_link":

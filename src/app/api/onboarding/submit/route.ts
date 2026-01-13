@@ -77,6 +77,16 @@ export async function POST(request: Request) {
       },
     });
 
+    // Create TenantUser for the customer (gives them portal access)
+    await db.tenantUser.create({
+      data: {
+        tenantId: tenant.id,
+        email: data.step1.email,
+        name: data.step1.businessName,
+        role: "admin",
+      },
+    });
+
     // Get base URL for redirects
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 

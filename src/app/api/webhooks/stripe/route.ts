@@ -114,6 +114,7 @@ export async function POST(request: Request) {
  * - Store Stripe IDs
  * - Create subscription record
  * - Queue AI generation job
+ * - Send welcome email with portal access
  */
 async function handleCheckoutCompleted(
   session: Stripe.Checkout.Session,
@@ -173,6 +174,20 @@ async function handleCheckoutCompleted(
       jobType: "ai_generate_spec",
       status: "pending",
       payload: { tenantId, planPages },
+    },
+  });
+
+  // Queue welcome email with portal access
+  await db.job.create({
+    data: {
+      tenantId,
+      jobType: "send_email",
+      status: "pending",
+      payload: {
+        template: "welcome",
+        tenantId,
+        customerEmail: session.customer_email,
+      },
     },
   });
 
