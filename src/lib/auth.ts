@@ -1,12 +1,12 @@
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import Resend from "next-auth/providers/resend";
-import { getDb } from "./db";
+import { db } from "./db";
 import { magicLinkEmail } from "./email/templates";
 
 // Auth.js configuration
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  adapter: PrismaAdapter(getDb()),
+  adapter: PrismaAdapter(db),
   providers: [
     Resend({
       apiKey: process.env.RESEND_API_KEY,
