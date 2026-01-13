@@ -4,53 +4,30 @@ import { Pool } from "pg";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
+  pool: Pool | undefined;
 };
 
-function createPrismaClient(): PrismaClient {
-  const connectionString = process.env.DATABASE_URL;
+// Create pool and client at module initialization
+const connectionString = process.env.DATABASE_URL;
 
-  if (!connectionString) {
-    throw new Error("DATABASE_URL environment variable is not set");
-  }
-
-  const pool = new Pool({ connectionString });
-  const adapter = new PrismaPg(pool);
-
-  return new PrismaClient({
-    adapter,
-    log:
-      process.env.NODE_ENV === "development"
-        ? ["query", "error", "warn"]
-        : ["error"],
-  });
+if (!connectionString) {
+  console.error("DATABASE_URL is not set");
 }
 
-// Create a singleton client - initialized lazily
-let _prismaClient: PrismaClient | null = null;
+const pool = globalForPrisma.pool ?? (connectionString ? new Pool({ connectionString }) : null);
+const adapter = pool ? new PrismaPg(pool) : null;
 
-function getPrismaClient(): PrismaClient {
-  if (!_prismaClient) {
-    _prismaClient = globalForPrisma.prisma ?? createPrismaClient();
-    if (process.env.NODE_ENV !== "production") {
-      globalForPrisma.prisma = _prismaClient;
-    }
-  }
-  return _prismaClient;
-}
-
-// Export db as a proxy that lazily initializes the client
-export const db = new Proxy({} as PrismaClient, {
-  get(_, prop: string) {
-    const client = getPrismaClient();
-    const value = client[prop as keyof PrismaClient];
-    if (typeof value === "function") {
-      return value.bind(client);
-    }
-    return value;
-  },
+export const db: PrismaClient = globalForPrisma.prisma ?? new PrismaClient({
+  adapter: adapter!,
+  log: process.env.NODE_ENV === "development" ? ["query", "error", "warn"] : ["error"],
 });
 
-// For backwards compatibility with code using getDb()
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = db;
+  if (pool) globalForPrisma.pool = pool;
+}
+
+// For backwards compatibility
 export function getDb(): PrismaClient {
-  return getPrismaClient();
+  return db;
 }
