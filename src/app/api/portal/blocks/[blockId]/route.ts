@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 // Define which fields are safe to edit per block type
 const SAFE_FIELDS: Record<string, string[]> = {
   hero: ["headline", "subheadline", "ctaText"],

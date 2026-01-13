@@ -4,6 +4,8 @@ import { isAdminEmail } from "@/lib/admin/auth";
 import { getDb } from "@/lib/db";
 import { cancelSubscription } from "@/lib/stripe";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ tenantId: string }> }

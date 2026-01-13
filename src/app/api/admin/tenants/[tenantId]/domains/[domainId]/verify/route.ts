@@ -5,6 +5,8 @@ import { getDb } from "@/lib/db";
 import dns from "dns";
 import { promisify } from "util";
 
+export const dynamic = "force-dynamic";
+
 const resolveCname = promisify(dns.resolveCname);
 const resolve4 = promisify(dns.resolve4);
 

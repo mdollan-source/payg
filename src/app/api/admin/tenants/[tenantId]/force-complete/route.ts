@@ -3,6 +3,8 @@ import { auth } from "@/lib/auth";
 import { isAdminEmail } from "@/lib/admin/auth";
 import { getDb } from "@/lib/db";
 
+export const dynamic = "force-dynamic";
+
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ tenantId: string }> }
