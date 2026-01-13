@@ -156,6 +156,19 @@ export async function POST(request: Request) {
       },
     });
 
+    // Queue welcome email
+    await db.job.create({
+      data: {
+        tenantId: tenant.id,
+        jobType: "send_email",
+        status: "pending",
+        payload: {
+          template: "welcome",
+          tenantId: tenant.id,
+        },
+      },
+    });
+
     // Redirect to success page (dev mode without payment)
     return NextResponse.json({
       checkoutUrl: `/signup/success?tenant=${tenant.id}`,
