@@ -1,14 +1,15 @@
 import { notFound, redirect } from "next/navigation";
-import { headers, cookies } from "next/headers";
+import { headers } from "next/headers";
 import { getDb } from "@/lib/db";
 import { resolveTenant, getTenantPage, getTenantData } from "@/lib/tenant/resolver";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import { TenantHeader } from "@/components/tenant/TenantHeader";
 import { TenantFooter } from "@/components/tenant/TenantFooter";
 import { LocalBusinessSchema } from "@/components/seo/LocalBusinessSchema";
-import { auth } from "@/lib/auth";
-import { isAdminEmail } from "@/lib/admin/auth";
 import type { Metadata } from "next";
+
+// Simple preview key - admins use this to preview pending sites
+const PREVIEW_KEY = process.env.PREVIEW_SECRET || "preview-admin-2026";
 
 interface TenantPageProps {
   params: Promise<{ slug?: string[] }>;
@@ -76,12 +77,8 @@ export default async function TenantPage({ params, searchParams }: TenantPagePro
     redirect(canonicalUrl);
   }
 
-  // Check tenant status - allow pending_review only for admins
-  let isPreviewMode = false;
-  if (tenant.status === "pending_review") {
-    const session = await auth();
-    isPreviewMode = !!(session?.user?.email && isAdminEmail(session.user.email));
-  }
+  // Check tenant status - allow pending_review with preview key
+  const isPreviewMode = tenant.status === "pending_review" && preview === PREVIEW_KEY;
 
   if (tenant.status !== "active" && !isPreviewMode) {
     return (
