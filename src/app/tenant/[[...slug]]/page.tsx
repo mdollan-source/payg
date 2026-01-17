@@ -10,6 +10,7 @@ import type { Metadata } from "next";
 
 interface TenantPageProps {
   params: Promise<{ slug?: string[] }>;
+  searchParams: Promise<{ preview?: string }>;
 }
 
 export const dynamic = "force-dynamic";
@@ -45,8 +46,9 @@ export async function generateMetadata({
   };
 }
 
-export default async function TenantPage({ params }: TenantPageProps) {
+export default async function TenantPage({ params, searchParams }: TenantPageProps) {
   const { slug } = await params;
+  const { preview } = await searchParams;
   const headersList = await headers();
   const hostname = headersList.get("x-tenant-host") || headersList.get("host") || "";
 
@@ -61,15 +63,16 @@ export default async function TenantPage({ params }: TenantPageProps) {
 
   const { tenant, domain, primaryDomain } = resolved;
 
-  // Canonical redirect: if not on primary domain, redirect there
-  if (primaryDomain && !domain.isPrimary) {
+  // Canonical redirect: if not on primary domain, redirect there (skip in preview mode)
+  if (primaryDomain && !domain.isPrimary && preview !== "1") {
     const pageSlug = "/" + (slug?.join("/") || "");
     const canonicalUrl = `https://${primaryDomain.domain}${pageSlug === "/" ? "" : pageSlug}`;
     redirect(canonicalUrl);
   }
 
-  // Check tenant status
-  if (tenant.status !== "active") {
+  // Check tenant status - allow preview mode for pending_review
+  const isPreviewMode = preview === "1" && tenant.status === "pending_review";
+  if (tenant.status !== "active" && !isPreviewMode) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center p-8">
@@ -109,6 +112,11 @@ export default async function TenantPage({ params }: TenantPageProps) {
         "--secondary-color": tenantData.siteSettings?.secondaryColourHex || "#1e40af",
       } as React.CSSProperties}
     >
+      {isPreviewMode && (
+        <div className="bg-yellow-500 text-yellow-900 text-center py-2 text-sm font-medium">
+          Preview Mode - This site is pending review
+        </div>
+      )}
       <LocalBusinessSchema
         businessName={tenant.businessName}
         url={`https://${primaryDomain?.domain || `${tenant.businessSlug}.paygsite.co.uk`}`}
