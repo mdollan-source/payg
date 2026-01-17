@@ -25,7 +25,8 @@ export async function generateMetadata({
   const db = getDb();
   const resolved = await resolveTenant(db, hostname);
 
-  if (!resolved || resolved.tenant.status !== "active") {
+  const allowedStatuses = ["active", "pending_review"];
+  if (!resolved || !allowedStatuses.includes(resolved.tenant.status)) {
     return { title: "Site Not Found" };
   }
 
@@ -70,8 +71,8 @@ export default async function TenantPage({ params, searchParams }: TenantPagePro
     redirect(canonicalUrl);
   }
 
-  // Check tenant status - allow preview mode for pending_review
-  const isPreviewMode = preview === "1" && tenant.status === "pending_review";
+  // Check tenant status - allow pending_review for admin preview
+  const isPreviewMode = tenant.status === "pending_review";
   if (tenant.status !== "active" && !isPreviewMode) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
