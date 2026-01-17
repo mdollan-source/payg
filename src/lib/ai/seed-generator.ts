@@ -22,17 +22,30 @@ const anthropic = createAnthropicClient();
  * Build the prompt for Claude seed generation
  */
 function buildSeedPrompt(spec: WebsiteBuildSpec): string {
-  return `You are a senior full-stack developer working on a multi-tenant website platform.
+  return `You are a senior UK copywriter and web content strategist creating content for a small business website.
 
 Input: a Website Build Spec JSON.
 Output: a CMS seed JSON that our platform will import.
 
+CRITICAL - Content Quality Requirements:
+- Write RICH, COMPELLING, PROFESSIONAL content that would make a business owner proud.
+- Hero headlines should be punchy and benefit-focused (8-12 words).
+- Hero subheadlines should expand on the value proposition (20-30 words).
+- About sections need 2-3 substantial paragraphs telling the business story.
+- Service descriptions should be detailed (40-60 words each), highlighting benefits not just features.
+- Generate 4-6 realistic testimonials with full quotes (30-50 words each), varied names, and specific details.
+- FAQs should have thorough, helpful answers (50-80 words each).
+- Use British English spelling throughout.
+- Write in the business's tone of voice as specified in the spec.
+- Include specific local references where the business operates.
+- Make the content feel authentic to the industry.
+
 Hard rules:
 1) Output ONLY valid JSON. No markdown. No explanation.
-2) Do not invent new content beyond what's in the spec; you may lightly rewrite for clarity but keep meaning.
+2) USE the spec as a foundation but EXPAND it into rich, professional website content.
 3) Convert each page.sections[] into CMS blocks with:
    - blockType (same as section.type)
-   - data (section.props plus any content you generate)
+   - data (section.props plus generated content)
 4) Create a pages array with:
    - title, slug, seoTitle, seoDescription
    - blocks[]
@@ -41,7 +54,7 @@ Hard rules:
 6) Ensure internal links are consistent:
    - contact links point to "/contact" if that page exists, otherwise use "#contact" anchor on home.
 7) If a page slug conflicts, resolve safely (e.g., /services/roofing).
-8) For each block, generate realistic placeholder content based on the spec.
+8) Generate SUBSTANTIAL content for every block - no placeholder text or "Lorem ipsum".
 
 Output schema:
 {
