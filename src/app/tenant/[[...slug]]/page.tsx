@@ -1,11 +1,13 @@
 import { notFound, redirect } from "next/navigation";
-import { headers } from "next/headers";
+import { headers, cookies } from "next/headers";
 import { getDb } from "@/lib/db";
 import { resolveTenant, getTenantPage, getTenantData } from "@/lib/tenant/resolver";
 import { BlockRenderer } from "@/components/blocks/BlockRenderer";
 import { TenantHeader } from "@/components/tenant/TenantHeader";
 import { TenantFooter } from "@/components/tenant/TenantFooter";
 import { LocalBusinessSchema } from "@/components/seo/LocalBusinessSchema";
+import { auth } from "@/lib/auth";
+import { isAdminEmail } from "@/lib/admin/auth";
 import type { Metadata } from "next";
 
 interface TenantPageProps {
@@ -25,8 +27,11 @@ export async function generateMetadata({
   const db = getDb();
   const resolved = await resolveTenant(db, hostname);
 
-  const allowedStatuses = ["active", "pending_review"];
-  if (!resolved || !allowedStatuses.includes(resolved.tenant.status)) {
+  if (!resolved || resolved.tenant.status !== "active") {
+    // For pending_review, return basic metadata (admin preview)
+    if (resolved?.tenant.status === "pending_review") {
+      return { title: `Preview: ${resolved.tenant.businessName}` };
+    }
     return { title: "Site Not Found" };
   }
 
@@ -71,8 +76,13 @@ export default async function TenantPage({ params, searchParams }: TenantPagePro
     redirect(canonicalUrl);
   }
 
-  // Check tenant status - allow pending_review for admin preview
-  const isPreviewMode = tenant.status === "pending_review";
+  // Check tenant status - allow pending_review only for admins
+  let isPreviewMode = false;
+  if (tenant.status === "pending_review") {
+    const session = await auth();
+    isPreviewMode = !!(session?.user?.email && isAdminEmail(session.user.email));
+  }
+
   if (tenant.status !== "active" && !isPreviewMode) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
