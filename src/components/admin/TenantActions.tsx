@@ -41,7 +41,7 @@ export function TenantActions({ tenant }: TenantActionsProps) {
     }
   };
 
-  const showRebuild = tenant.status === "generation_failed" || tenant.status === "active";
+  const showRebuild = tenant.status === "generation_failed" || tenant.status === "active" || tenant.status === "pending_review";
   const showCancel = tenant.status !== "cancelled" && tenant.status !== "archived";
 
   return (
