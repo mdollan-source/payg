@@ -37,7 +37,7 @@ export async function POST(
   await createJob(db, {
     jobType: "ai_generate_spec",
     tenantId,
-    payload: { tenantId, rebuild: true },
+    payload: { tenantId, planPages: tenant.planPages, rebuild: true },
   });
 
   return NextResponse.json({ success: true });
